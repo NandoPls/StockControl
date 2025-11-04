@@ -15,8 +15,12 @@ namespace Inventario
         private List<string> clasificacionesSeleccionadas;
 
         private ComboBox cboAlmacen;
+        private RadioButton rbTipo;
+        private RadioButton rbSubtipo;
         private CheckedListBox clbClasificaciones;
+        private CheckedListBox clbSubtipos;
         private TextBox txtEscaneo;
+        private bool usarSubtipo = false;
         private Label lblInstruccion;
         private Label lblProgreso;
         private DataGridView dgvInventario;
@@ -130,11 +134,44 @@ namespace Inventario
             cboAlmacen.SelectedIndexChanged += CboAlmacen_SelectedIndexChanged;
             panelSeleccion.Controls.Add(cboAlmacen);
 
-            // Selección de clasificaciones (múltiple)
+            // RadioButtons para elegir entre Tipo o Subtipo
+            Label lblModoClasificacion = new Label
+            {
+                Text = "Clasificar por:",
+                Location = new Point(30, 110),
+                Size = new Size(120, 25),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold)
+            };
+            panelSeleccion.Controls.Add(lblModoClasificacion);
+
+            rbTipo = new RadioButton
+            {
+                Text = "📦 Tipo (Marca)",
+                Location = new Point(160, 110),
+                Size = new Size(150, 25),
+                Font = new Font("Segoe UI", 10),
+                Checked = true,
+                Enabled = false
+            };
+            rbTipo.CheckedChanged += RbTipo_CheckedChanged;
+            panelSeleccion.Controls.Add(rbTipo);
+
+            rbSubtipo = new RadioButton
+            {
+                Text = "📋 Subtipo (Detalle)",
+                Location = new Point(320, 110),
+                Size = new Size(180, 25),
+                Font = new Font("Segoe UI", 10),
+                Enabled = false
+            };
+            rbSubtipo.CheckedChanged += RbSubtipo_CheckedChanged;
+            panelSeleccion.Controls.Add(rbSubtipo);
+
+            // Selección de clasificaciones por Tipo (múltiple)
             Label lblClasificacion = new Label
             {
                 Text = "Seleccione Clasificaciones (puede marcar varias):",
-                Location = new Point(30, 120),
+                Location = new Point(30, 145),
                 Size = new Size(400, 25),
                 Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
@@ -142,22 +179,38 @@ namespace Inventario
 
             clbClasificaciones = new CheckedListBox
             {
-                Location = new Point(30, 150),
-                Size = new Size(600, 120),
+                Location = new Point(30, 175),
+                Size = new Size(600, 100),
                 Font = new Font("Segoe UI", 10),
                 CheckOnClick = true,
                 Enabled = false,
                 BackColor = Color.FromArgb(250, 250, 250),
-                BorderStyle = BorderStyle.FixedSingle
+                BorderStyle = BorderStyle.FixedSingle,
+                Visible = true
             };
             clbClasificaciones.ItemCheck += ClbClasificaciones_ItemCheck;
             panelSeleccion.Controls.Add(clbClasificaciones);
+
+            // CheckedListBox para Subtipos (inicialmente oculto)
+            clbSubtipos = new CheckedListBox
+            {
+                Location = new Point(30, 175),
+                Size = new Size(600, 100),
+                Font = new Font("Segoe UI", 10),
+                CheckOnClick = true,
+                Enabled = false,
+                BackColor = Color.FromArgb(250, 250, 250),
+                BorderStyle = BorderStyle.FixedSingle,
+                Visible = false
+            };
+            clbSubtipos.ItemCheck += ClbSubtipos_ItemCheck;
+            panelSeleccion.Controls.Add(clbSubtipos);
 
             // Botón Iniciar
             btnIniciar = new Button
             {
                 Text = "INICIAR INVENTARIO",
-                Location = new Point(650, 150),
+                Location = new Point(650, 175),
                 Size = new Size(250, 50),
                 Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 BackColor = Color.FromArgb(0, 122, 204),
@@ -323,7 +376,7 @@ namespace Inventario
 
             Label lblFooter = new Label
             {
-                Text = "StockControl v1.0.0 | Desarrollado por Fernando Carrasco",
+                Text = "StockControl v1.0.1 | Desarrollado por Fernando Carrasco",
                 Location = new Point(20, 10),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9),
@@ -364,6 +417,7 @@ namespace Inventario
 
             almacenSeleccionado = cboAlmacen.SelectedItem.ToString();
 
+            // Cargar clasificaciones por Tipo (ItmsGrpNam)
             var clasificaciones = ExcelDataManager.ProductosExcel
                 .Where(p => p.WhsCode == almacenSeleccionado)
                 .Select(p => p.ItmsGrpNam)
@@ -372,14 +426,40 @@ namespace Inventario
                 .ToList();
 
             clbClasificaciones.Items.Clear();
-            clasificacionesSeleccionadas.Clear();
-
             foreach (var clasificacion in clasificaciones)
             {
                 clbClasificaciones.Items.Add(clasificacion);
             }
 
-            clbClasificaciones.Enabled = true;
+            // Cargar clasificaciones por Subtipo (U_Comercial3)
+            var subtipos = ExcelDataManager.ProductosExcel
+                .Where(p => p.WhsCode == almacenSeleccionado && !string.IsNullOrWhiteSpace(p.U_Comercial3))
+                .Select(p => p.U_Comercial3)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+
+            clbSubtipos.Items.Clear();
+            foreach (var subtipo in subtipos)
+            {
+                clbSubtipos.Items.Add(subtipo);
+            }
+
+            clasificacionesSeleccionadas.Clear();
+
+            // Habilitar radiobuttons y el CheckedListBox visible
+            rbTipo.Enabled = true;
+            rbSubtipo.Enabled = true;
+
+            if (rbTipo.Checked)
+            {
+                clbClasificaciones.Enabled = true;
+            }
+            else
+            {
+                clbSubtipos.Enabled = true;
+            }
+
             btnIniciar.Enabled = false;
         }
 
@@ -396,6 +476,67 @@ namespace Inventario
             }));
         }
 
+        private void ClbSubtipos_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            this.BeginInvoke(new Action(() =>
+            {
+                clasificacionesSeleccionadas.Clear();
+                foreach (var item in clbSubtipos.CheckedItems)
+                {
+                    clasificacionesSeleccionadas.Add(item.ToString());
+                }
+                btnIniciar.Enabled = clasificacionesSeleccionadas.Count > 0;
+            }));
+        }
+
+        private void RbTipo_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbTipo.Checked)
+            {
+                usarSubtipo = false;
+
+                // Mostrar CheckedListBox de Tipos, ocultar de Subtipos
+                clbClasificaciones.Visible = true;
+                clbClasificaciones.Enabled = true;
+                clbSubtipos.Visible = false;
+                clbSubtipos.Enabled = false;
+
+                // Limpiar selección y actualizar botón
+                clasificacionesSeleccionadas.Clear();
+                clbSubtipos.ClearSelected();
+                for (int i = 0; i < clbSubtipos.Items.Count; i++)
+                {
+                    clbSubtipos.SetItemChecked(i, false);
+                }
+
+                btnIniciar.Enabled = clbClasificaciones.CheckedItems.Count > 0;
+            }
+        }
+
+        private void RbSubtipo_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbSubtipo.Checked)
+            {
+                usarSubtipo = true;
+
+                // Ocultar CheckedListBox de Tipos, mostrar de Subtipos
+                clbClasificaciones.Visible = false;
+                clbClasificaciones.Enabled = false;
+                clbSubtipos.Visible = true;
+                clbSubtipos.Enabled = true;
+
+                // Limpiar selección y actualizar botón
+                clasificacionesSeleccionadas.Clear();
+                clbClasificaciones.ClearSelected();
+                for (int i = 0; i < clbClasificaciones.Items.Count; i++)
+                {
+                    clbClasificaciones.SetItemChecked(i, false);
+                }
+
+                btnIniciar.Enabled = clbSubtipos.CheckedItems.Count > 0;
+            }
+        }
+
         private void BtnIniciar_Click(object sender, EventArgs e)
         {
             if (clasificacionesSeleccionadas.Count == 0)
@@ -410,10 +551,22 @@ namespace Inventario
             conteoActual.Clear();
             dgvInventario.Rows.Clear();
 
-            // Cargar productos de todas las clasificaciones seleccionadas
-            var productos = ExcelDataManager.ProductosExcel
-                .Where(p => p.WhsCode == almacenSeleccionado && clasificacionesSeleccionadas.Contains(p.ItmsGrpNam))
-                .ToList();
+            // Cargar productos según el tipo de clasificación seleccionado
+            List<ProductoExcel> productos;
+            if (usarSubtipo)
+            {
+                // Filtrar por Subtipo (U_Comercial3)
+                productos = ExcelDataManager.ProductosExcel
+                    .Where(p => p.WhsCode == almacenSeleccionado && clasificacionesSeleccionadas.Contains(p.U_Comercial3))
+                    .ToList();
+            }
+            else
+            {
+                // Filtrar por Tipo (ItmsGrpNam)
+                productos = ExcelDataManager.ProductosExcel
+                    .Where(p => p.WhsCode == almacenSeleccionado && clasificacionesSeleccionadas.Contains(p.ItmsGrpNam))
+                    .ToList();
+            }
 
             foreach (var producto in productos)
             {
@@ -742,7 +895,7 @@ namespace Inventario
     </div>
 
     <div class='footer'>
-        <p>StockControl v1.0.0 | Desarrollado por Fernando Carrasco</p>
+        <p>StockControl v1.0.1 | Desarrollado por Fernando Carrasco</p>
         <p>Este reporte fue generado automáticamente el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm}</p>
     </div>
 </body>
