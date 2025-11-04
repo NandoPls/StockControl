@@ -4,6 +4,8 @@ using System.Drawing;
 using System.Linq;
 using System.Media;
 using System.Windows.Forms;
+using System.IO;
+using System.Text.Json;
 
 namespace Inventario
 {
@@ -31,6 +33,18 @@ namespace Inventario
         private Panel panelSeleccion;
         private Panel panelEscaneo;
 
+        // Nuevos controles para mejoras v1.1.0
+        private TextBox txtBusqueda;
+        private CheckBox chkSoloDiferencias;
+        private Panel panelEstadisticas;
+        private Label lblTotalProductos;
+        private Label lblProductosCorrectos;
+        private Label lblProductosSobrantes;
+        private Label lblProductosFaltantes;
+        private Label lblPorcentajeAvance;
+        private System.Windows.Forms.Timer timerAutoguardado;
+        private string archivoSesion = "";
+
         public InventarioForm()
         {
             InitializeComponent();
@@ -39,6 +53,8 @@ namespace Inventario
             conteoActual = new Dictionary<string, int>();
             clasificacionesSeleccionadas = new List<string>();
             ConfigurarIcono();
+            ConfigurarAutoguardado();
+            VerificarSesionPendiente();
         }
 
         private void ConfigurarIcono()
@@ -317,6 +333,38 @@ namespace Inventario
 
             panelEscaneo.Controls.Add(dgvInventario);
 
+            // **NUEVO: Búsqueda rápida**
+            Label lblBusqueda = new Label
+            {
+                Text = "🔍 Buscar:",
+                Location = new Point(30, 555),
+                Size = new Size(70, 25),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+            panelEscaneo.Controls.Add(lblBusqueda);
+
+            txtBusqueda = new TextBox
+            {
+                Location = new Point(105, 553),
+                Size = new Size(200, 25),
+                Font = new Font("Segoe UI", 10),
+                PlaceholderText = "Código, EAN o Detalle..."
+            };
+            txtBusqueda.TextChanged += TxtBusqueda_TextChanged;
+            panelEscaneo.Controls.Add(txtBusqueda);
+
+            // **NUEVO: Filtro Solo Diferencias**
+            chkSoloDiferencias = new CheckBox
+            {
+                Text = "📊 Solo Diferencias",
+                Location = new Point(320, 555),
+                Size = new Size(150, 25),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.FromArgb(220, 53, 69)
+            };
+            chkSoloDiferencias.CheckedChanged += ChkSoloDiferencias_CheckedChanged;
+            panelEscaneo.Controls.Add(chkSoloDiferencias);
+
             // Botones finales
             btnFinalizar = new Button
             {
@@ -366,6 +414,104 @@ namespace Inventario
 
             this.Controls.Add(panelEscaneo);
 
+            // **NUEVO: Panel de Estadísticas en Tiempo Real**
+            panelEstadisticas = new Panel
+            {
+                Location = new Point(20, 340),
+                Size = new Size(940, 200),
+                BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                Visible = false
+            };
+
+            Label lblTituloEstadisticas = new Label
+            {
+                Text = "📊 ESTADÍSTICAS EN TIEMPO REAL",
+                Location = new Point(20, 10),
+                Size = new Size(400, 30),
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(0, 122, 204)
+            };
+            panelEstadisticas.Controls.Add(lblTituloEstadisticas);
+
+            lblTotalProductos = new Label
+            {
+                Text = "Total de Productos\n0",
+                Location = new Point(50, 60),
+                Size = new Size(180, 80),
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.FromArgb(230, 240, 255),
+                BorderStyle = BorderStyle.FixedSingle,
+                ForeColor = Color.FromArgb(0, 122, 204)
+            };
+            panelEstadisticas.Controls.Add(lblTotalProductos);
+
+            lblProductosCorrectos = new Label
+            {
+                Text = "✅ Correctos\n0",
+                Location = new Point(250, 60),
+                Size = new Size(150, 80),
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.FromArgb(212, 237, 218),
+                BorderStyle = BorderStyle.FixedSingle,
+                ForeColor = Color.FromArgb(21, 87, 36)
+            };
+            panelEstadisticas.Controls.Add(lblProductosCorrectos);
+
+            lblProductosSobrantes = new Label
+            {
+                Text = "⬆️ Sobrantes\n0",
+                Location = new Point(420, 60),
+                Size = new Size(150, 80),
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.FromArgb(255, 243, 205),
+                BorderStyle = BorderStyle.FixedSingle,
+                ForeColor = Color.FromArgb(133, 100, 4)
+            };
+            panelEstadisticas.Controls.Add(lblProductosSobrantes);
+
+            lblProductosFaltantes = new Label
+            {
+                Text = "⬇️ Faltantes\n0",
+                Location = new Point(590, 60),
+                Size = new Size(150, 80),
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.FromArgb(248, 215, 218),
+                BorderStyle = BorderStyle.FixedSingle,
+                ForeColor = Color.FromArgb(114, 28, 36)
+            };
+            panelEstadisticas.Controls.Add(lblProductosFaltantes);
+
+            lblPorcentajeAvance = new Label
+            {
+                Text = "AVANCE: 0%",
+                Location = new Point(760, 60),
+                Size = new Size(150, 80),
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.FromArgb(230, 240, 255),
+                BorderStyle = BorderStyle.FixedSingle,
+                ForeColor = Color.FromArgb(0, 122, 204)
+            };
+            panelEstadisticas.Controls.Add(lblPorcentajeAvance);
+
+            Label lblInfoAutoguardado = new Label
+            {
+                Text = "💾 Autoguardado cada 2 minutos",
+                Location = new Point(320, 155),
+                Size = new Size(300, 25),
+                Font = new Font("Segoe UI", 9, FontStyle.Italic),
+                ForeColor = Color.Gray,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            panelEstadisticas.Controls.Add(lblInfoAutoguardado);
+
+            this.Controls.Add(panelEstadisticas);
+
             // Footer
             Panel panelFooter = new Panel
             {
@@ -376,7 +522,7 @@ namespace Inventario
 
             Label lblFooter = new Label
             {
-                Text = "StockControl v1.0.1 | Desarrollado por Fernando Carrasco",
+                Text = "StockControl v1.2.0 | Desarrollado por Fernando Carrasco",
                 Location = new Point(20, 10),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9),
@@ -590,10 +736,16 @@ namespace Inventario
             }
 
             ActualizarProgreso();
+            ActualizarEstadisticas();
 
             // Cambiar a modo escaneo
             panelSeleccion.Visible = false;
             panelEscaneo.Visible = true;
+            panelEstadisticas.Visible = true;
+
+            // Iniciar autoguardado
+            timerAutoguardado.Start();
+
             txtEscaneo.Focus();
         }
 
@@ -653,6 +805,7 @@ namespace Inventario
                 }
 
                 ActualizarProgreso();
+                ActualizarEstadisticas();
             }
             else
             {
@@ -704,6 +857,7 @@ namespace Inventario
                     }
 
                     ActualizarProgreso();
+                    ActualizarEstadisticas();
                 }
                 else
                 {
@@ -733,7 +887,20 @@ namespace Inventario
 
             if (resultado == DialogResult.Yes)
             {
+                // Detener autoguardado
+                timerAutoguardado.Stop();
+
                 GuardarRespaldoInventario();
+
+                // Limpiar sesión guardada
+                if (!string.IsNullOrEmpty(archivoSesion) && File.Exists(archivoSesion))
+                {
+                    try
+                    {
+                        File.Delete(archivoSesion);
+                    }
+                    catch { }
+                }
 
                 MessageBox.Show(
                     "✅ Inventario finalizado y guardado exitosamente.\n\nAhora puede generar el reporte por correo si lo desea.",
@@ -895,7 +1062,7 @@ namespace Inventario
     </div>
 
     <div class='footer'>
-        <p>StockControl v1.0.1 | Desarrollado por Fernando Carrasco</p>
+        <p>StockControl v1.2.0 | Desarrollado por Fernando Carrasco</p>
         <p>Este reporte fue generado automáticamente el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm}</p>
     </div>
 </body>
@@ -1076,6 +1243,293 @@ namespace Inventario
                 System.Diagnostics.Debug.WriteLine($"Error al guardar respaldo: {ex.Message}");
             }
         }
+
+        // ============================================
+        // NUEVAS FUNCIONALIDADES v1.1.0
+        // ============================================
+
+        #region Persistencia de Sesión y Autoguardado
+
+        private void ConfigurarAutoguardado()
+        {
+            timerAutoguardado = new System.Windows.Forms.Timer();
+            timerAutoguardado.Interval = 120000; // 2 minutos
+            timerAutoguardado.Tick += TimerAutoguardado_Tick;
+        }
+
+        private void TimerAutoguardado_Tick(object sender, EventArgs e)
+        {
+            if (productosParaInventariar.Count > 0 && panelEscaneo.Visible)
+            {
+                GuardarSesion();
+            }
+        }
+
+        private void GuardarSesion()
+        {
+            try
+            {
+                string carpetaSesiones = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sesiones");
+                if (!Directory.Exists(carpetaSesiones))
+                {
+                    Directory.CreateDirectory(carpetaSesiones);
+                }
+
+                if (string.IsNullOrEmpty(archivoSesion))
+                {
+                    archivoSesion = Path.Combine(carpetaSesiones, $"Sesion_{DateTime.Now:yyyyMMdd_HHmmss}.json");
+                }
+
+                var sesion = new
+                {
+                    FechaGuardado = DateTime.Now,
+                    Almacen = almacenSeleccionado,
+                    Clasificaciones = clasificacionesSeleccionadas,
+                    UsarSubtipo = usarSubtipo,
+                    ConteosActuales = conteoActual
+                };
+
+                string json = JsonSerializer.Serialize(sesion, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(archivoSesion, json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al guardar sesión: {ex.Message}");
+            }
+        }
+
+        private void VerificarSesionPendiente()
+        {
+            try
+            {
+                string carpetaSesiones = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sesiones");
+                if (!Directory.Exists(carpetaSesiones)) return;
+
+                var archivos = Directory.GetFiles(carpetaSesiones, "*.json");
+                if (archivos.Length == 0) return;
+
+                var resultado = MessageBox.Show(
+                    "Se detectó una sesión anterior no finalizada.\n\n¿Desea recuperar el inventario en progreso?",
+                    "Sesión Pendiente",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (resultado == DialogResult.Yes)
+                {
+                    string archivoMasReciente = archivos.OrderByDescending(f => File.GetLastWriteTime(f)).First();
+                    CargarSesion(archivoMasReciente);
+                }
+                else
+                {
+                    // Limpiar sesiones antiguas
+                    foreach (var archivo in archivos)
+                    {
+                        File.Delete(archivo);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al verificar sesiones: {ex.Message}");
+            }
+        }
+
+        private void CargarSesion(string archivo)
+        {
+            try
+            {
+                string json = File.ReadAllText(archivo);
+                var sesion = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+
+                if (sesion != null)
+                {
+                    archivoSesion = archivo;
+
+                    // Restaurar datos básicos
+                    almacenSeleccionado = sesion["Almacen"].GetString() ?? "";
+                    usarSubtipo = sesion["UsarSubtipo"].GetBoolean();
+
+                    // Restaurar clasificaciones
+                    clasificacionesSeleccionadas.Clear();
+                    foreach (var item in sesion["Clasificaciones"].EnumerateArray())
+                    {
+                        clasificacionesSeleccionadas.Add(item.GetString() ?? "");
+                    }
+
+                    // Restaurar conteos
+                    conteoActual.Clear();
+                    foreach (var prop in sesion["ConteosActuales"].EnumerateObject())
+                    {
+                        conteoActual[prop.Name] = prop.Value.GetInt32();
+                    }
+
+                    // Cargar productos y aplicar conteos
+                    var productos = ExcelDataManager.ProductosExcel
+                        .Where(p => p.WhsCode == almacenSeleccionado &&
+                                  (usarSubtipo ? clasificacionesSeleccionadas.Contains(p.U_Comercial3)
+                                               : clasificacionesSeleccionadas.Contains(p.ItmsGrpNam)))
+                        .ToList();
+
+                    productosParaInventariar.Clear();
+                    dgvInventario.Rows.Clear();
+
+                    foreach (var producto in productos)
+                    {
+                        if (!productosParaInventariar.ContainsKey(producto.CodeBars))
+                        {
+                            productosParaInventariar[producto.CodeBars] = producto;
+
+                            int stockContado = conteoActual.ContainsKey(producto.CodeBars) ? conteoActual[producto.CodeBars] : 0;
+
+                            int rowIndex = dgvInventario.Rows.Add();
+                            DataGridViewRow row = dgvInventario.Rows[rowIndex];
+                            row.Cells["Marca"].Value = producto.ItmsGrpNam;
+                            row.Cells["Clasificacion"].Value = producto.U_Comercial1;
+                            row.Cells["Detalle"].Value = producto.U_Comercial3;
+                            row.Cells["Codigo"].Value = producto.ItemCode;
+                            row.Cells["EAN"].Value = producto.CodeBars;
+                            row.Cells["StockSistema"].Value = producto.StockTienda;
+                            row.Cells["StockContado"].Value = stockContado;
+                            row.Cells["Diferencia"].Value = stockContado - producto.StockTienda;
+
+                            int diferencia = stockContado - producto.StockTienda;
+                            if (diferencia == 0)
+                                row.DefaultCellStyle.BackColor = Color.FromArgb(220, 255, 220);
+                            else if (diferencia > 0)
+                                row.DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 200);
+                            else
+                                row.DefaultCellStyle.BackColor = Color.FromArgb(255, 240, 240);
+                        }
+                    }
+
+                    // Cambiar a panel de escaneo
+                    panelSeleccion.Visible = false;
+                    panelEscaneo.Visible = true;
+                    panelEstadisticas.Visible = true;
+                    timerAutoguardado.Start();
+
+                    ActualizarProgreso();
+                    ActualizarEstadisticas();
+
+                    MessageBox.Show("✅ Sesión recuperada exitosamente.", "Sesión Restaurada",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar sesión: {ex.Message}", "Error",
+                              MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        #endregion
+
+        #region Búsqueda Rápida
+
+        private void TxtBusqueda_TextChanged(object sender, EventArgs e)
+        {
+            string busqueda = txtBusqueda.Text.Trim().ToLower();
+
+            if (string.IsNullOrEmpty(busqueda))
+            {
+                // Mostrar todas las filas (respetando filtro de diferencias si está activo)
+                AplicarFiltros();
+                return;
+            }
+
+            foreach (DataGridViewRow row in dgvInventario.Rows)
+            {
+                string codigo = row.Cells["Codigo"].Value?.ToString()?.ToLower() ?? "";
+                string ean = row.Cells["EAN"].Value?.ToString()?.ToLower() ?? "";
+                string detalle = row.Cells["Detalle"].Value?.ToString()?.ToLower() ?? "";
+
+                bool coincide = codigo.Contains(busqueda) || ean.Contains(busqueda) || detalle.Contains(busqueda);
+
+                // Si está activo el filtro de diferencias, también verificar eso
+                if (chkSoloDiferencias.Checked)
+                {
+                    int diferencia = Convert.ToInt32(row.Cells["Diferencia"].Value);
+                    row.Visible = coincide && diferencia != 0;
+                }
+                else
+                {
+                    row.Visible = coincide;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Filtro Solo Diferencias
+
+        private void ChkSoloDiferencias_CheckedChanged(object sender, EventArgs e)
+        {
+            AplicarFiltros();
+        }
+
+        private void AplicarFiltros()
+        {
+            string busqueda = txtBusqueda.Text.Trim().ToLower();
+            bool soloDiferencias = chkSoloDiferencias.Checked;
+
+            foreach (DataGridViewRow row in dgvInventario.Rows)
+            {
+                bool cumpleFiltros = true;
+
+                // Filtro de búsqueda
+                if (!string.IsNullOrEmpty(busqueda))
+                {
+                    string codigo = row.Cells["Codigo"].Value?.ToString()?.ToLower() ?? "";
+                    string ean = row.Cells["EAN"].Value?.ToString()?.ToLower() ?? "";
+                    string detalle = row.Cells["Detalle"].Value?.ToString()?.ToLower() ?? "";
+                    cumpleFiltros = codigo.Contains(busqueda) || ean.Contains(busqueda) || detalle.Contains(busqueda);
+                }
+
+                // Filtro de diferencias
+                if (cumpleFiltros && soloDiferencias)
+                {
+                    int diferencia = Convert.ToInt32(row.Cells["Diferencia"].Value);
+                    cumpleFiltros = diferencia != 0;
+                }
+
+                row.Visible = cumpleFiltros;
+            }
+        }
+
+        #endregion
+
+        #region Estadísticas en Tiempo Real
+
+        private void ActualizarEstadisticas()
+        {
+            int total = dgvInventario.Rows.Count;
+            int correctos = 0;
+            int sobrantes = 0;
+            int faltantes = 0;
+            int inventariados = 0;
+
+            foreach (DataGridViewRow row in dgvInventario.Rows)
+            {
+                int stockContado = Convert.ToInt32(row.Cells["StockContado"].Value);
+                int diferencia = Convert.ToInt32(row.Cells["Diferencia"].Value);
+
+                if (stockContado > 0) inventariados++;
+
+                if (diferencia == 0) correctos++;
+                else if (diferencia > 0) sobrantes++;
+                else faltantes++;
+            }
+
+            int porcentaje = total > 0 ? (inventariados * 100 / total) : 0;
+
+            lblTotalProductos.Text = $"Total de Productos\n{total}";
+            lblProductosCorrectos.Text = $"✅ Correctos\n{correctos}";
+            lblProductosSobrantes.Text = $"⬆️ Sobrantes\n{sobrantes}";
+            lblProductosFaltantes.Text = $"⬇️ Faltantes\n{faltantes}";
+            lblPorcentajeAvance.Text = $"AVANCE\n{porcentaje}%";
+        }
+
+        #endregion
 
         private void InitializeComponent()
         {

@@ -1,14 +1,21 @@
+using System;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
+
 namespace Inventario
 {
     public partial class PantallaPrincipal : Form
     {
         private string? archivoExcelSeleccionado;
+        private bool usarSap = false;
 
         public PantallaPrincipal()
         {
             InitializeComponent();
             ConfigurarEstiloInicial();
             ConfigurarIcono();
+            VerificarConfiguracionSap();
         }
 
         private void ConfigurarEstiloInicial()
@@ -91,37 +98,99 @@ namespace Inventario
 
         private void btnContinuar_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(archivoExcelSeleccionado))
+            if (usarSap)
             {
-                try
-                {
-                    // Cargar datos del Excel
-                    if (ExcelDataManager.CargarExcel(archivoExcelSeleccionado))
-                    {
-                        MessageBox.Show($"Archivo cargado exitosamente.\n\nProductos cargados: {ExcelDataManager.ProductosExcel.Count}",
-                            "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Cargar desde SAP
+                CargarDesdeSap();
+            }
+            else if (!string.IsNullOrEmpty(archivoExcelSeleccionado))
+            {
+                // Cargar desde Excel
+                CargarDesdeExcel();
+            }
+        }
 
-                        // Abrir ventana de inventario
-                        InventarioForm formInventario = new InventarioForm();
-                        formInventario.ShowDialog();
-                    }
-                    else
-                    {
-                        MessageBox.Show("No se encontraron datos en el archivo Excel.",
-                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                catch (IOException ioEx)
+        private void CargarDesdeExcel()
+        {
+            try
+            {
+                // Cargar datos del Excel
+                if (ExcelDataManager.CargarExcel(archivoExcelSeleccionado!))
                 {
-                    MessageBox.Show(ioEx.Message, "Archivo en Uso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"✅ Archivo Excel cargado exitosamente.\n\nProductos cargados: {ExcelDataManager.ProductosExcel.Count}",
+                        "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // Abrir ventana de inventario
+                    InventarioForm formInventario = new InventarioForm();
+                    formInventario.ShowDialog();
                 }
-                catch (Exception ex)
+                else
                 {
-                    string nombreArchivo = Path.GetFileName(archivoExcelSeleccionado);
-                    MessageBox.Show($"Error al cargar el archivo \"{nombreArchivo}\":\n\n{ex.Message}",
+                    MessageBox.Show("No se encontraron datos en el archivo Excel.",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+            catch (IOException ioEx)
+            {
+                MessageBox.Show(ioEx.Message, "Archivo en Uso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch (Exception ex)
+            {
+                string nombreArchivo = Path.GetFileName(archivoExcelSeleccionado!);
+                MessageBox.Show($"Error al cargar el archivo \"{nombreArchivo}\":\n\n{ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void CargarDesdeSap()
+        {
+            try
+            {
+                // Intentar conectar a SAP
+                var config = ConfigManager.CargarConfiguracion();
+
+                if (!SapConnector.ConfigurarConexion(config.SapConnection))
+                {
+                    MessageBox.Show("No se pudo conectar a SAP Business One.\n\nVerifique la configuración en appsettings.json",
+                        "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Cargar productos desde SAP (por ahora sin filtro de almacén, se hace en InventarioForm)
+                MessageBox.Show("✅ Conectado a SAP Business One exitosamente.\n\nLos datos se cargarán al seleccionar almacén y clasificación.",
+                    "Conexión Exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Marcar que estamos usando SAP
+                ExcelDataManager.ConfigurarOrigenDatos("SAP");
+
+                // Abrir ventana de inventario
+                InventarioForm formInventario = new InventarioForm();
+                formInventario.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al conectar con SAP:\n\n{ex.Message}\n\nVerifique appsettings.json y que el servidor SQL de SAP esté accesible.",
+                    "Error SAP", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void VerificarConfiguracionSap()
+        {
+            // Verificar si SAP está habilitado en configuración
+            var config = ConfigManager.CargarConfiguracion();
+
+            if (config.SapConnection.Enabled)
+            {
+                // Mostrar opción SAP en la interfaz
+                // Esto se puede expandir más adelante con un RadioButton o botón adicional
+                usarSap = true;
+            }
+        }
+
+        private void btnConectarSap_Click(object sender, EventArgs e)
+        {
+            usarSap = true;
+            CargarDesdeSap();
         }
 
     }

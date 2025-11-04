@@ -6,7 +6,8 @@
       "Bash(git push:*)",
       "Bash(git tag:*)",
       "Bash(gh repo create:*)",
-      "Bash(git remote:*)"
+      "Bash(git remote:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nStockControl v1.0.1 - Clasificación por Tipo o Subtipo\n\nNuevas características:\n- Opción para clasificar por Tipo (Marca) o Subtipo (Detalle)\n- RadioButtons para selección mutuamente exclusiva\n- Segundo CheckedListBox para subtipos (Column C - U_Comercial3)\n- Alternancia visual entre modos de clasificación\n- Filtrado de productos según clasificación seleccionada\n\nMejoras técnicas:\n- Agregados controles rbTipo y rbSubtipo\n- Implementado clbSubtipos para clasificación por subtipo\n- Lógica de toggle en RbTipo_CheckedChanged y RbSubtipo_CheckedChanged\n- BtnIniciar_Click ahora filtra por ItmsGrpNam o U_Comercial3\n- CboAlmacen_SelectedIndexChanged carga ambas listas\n\nActualizado:\n- Versión actualizada de 1.0.0 a 1.0.1 en todos los archivos\n- Footer en PantallaPrincipal.Designer.cs\n- Footer en InventarioForm.cs\n- Footer en reporte HTML de email\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

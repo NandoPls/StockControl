@@ -8,6 +8,40 @@ namespace Inventario
     public static class ExcelDataManager
     {
         public static List<ProductoExcel> ProductosExcel { get; private set; }
+        private static string origenDatos = "Excel"; // "Excel" o "SAP"
+
+        /// <summary>
+        /// Configura el origen de datos (Excel o SAP)
+        /// </summary>
+        public static void ConfigurarOrigenDatos(string origen)
+        {
+            origenDatos = origen;
+        }
+
+        /// <summary>
+        /// Obtiene el origen de datos actual
+        /// </summary>
+        public static string ObtenerOrigenDatos()
+        {
+            return origenDatos;
+        }
+
+        /// <summary>
+        /// Carga productos desde SAP para un almacén específico
+        /// </summary>
+        public static bool CargarDesdeSap(string almacen)
+        {
+            try
+            {
+                ProductosExcel = SapConnector.CargarProductosDesdeSap(almacen);
+                origenDatos = "SAP";
+                return ProductosExcel.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al cargar desde SAP: {ex.Message}", ex);
+            }
+        }
 
         public static bool CargarExcel(string rutaArchivo)
         {
