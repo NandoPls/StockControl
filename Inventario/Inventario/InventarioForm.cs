@@ -45,6 +45,7 @@ namespace Inventario
         private Label lblPorcentajeAvance;
         private System.Windows.Forms.Timer timerAutoguardado;
         private string archivoSesion = "";
+        private string archivoExcelRespaldo = ""; // Ruta del último Excel generado
 
         public InventarioForm()
         {
@@ -335,11 +336,15 @@ namespace Inventario
 
             panelEscaneo.Controls.Add(dgvInventario);
 
-            // **NUEVO: Búsqueda rápida**
+            // ============================================
+            // PANEL INFERIOR REORGANIZADO
+            // ============================================
+
+            // FILA 1: Búsqueda y Filtros (Y = 555)
             Label lblBusqueda = new Label
             {
                 Text = "🔍 Buscar:",
-                Location = new Point(30, 555),
+                Location = new Point(30, 558),
                 Size = new Size(70, 25),
                 Font = new Font("Segoe UI", 10, FontStyle.Bold)
             };
@@ -347,34 +352,33 @@ namespace Inventario
 
             txtBusqueda = new TextBox
             {
-                Location = new Point(105, 553),
-                Size = new Size(200, 25),
+                Location = new Point(105, 556),
+                Size = new Size(250, 25),
                 Font = new Font("Segoe UI", 10),
                 PlaceholderText = "Código, EAN o Detalle..."
             };
             txtBusqueda.TextChanged += TxtBusqueda_TextChanged;
             panelEscaneo.Controls.Add(txtBusqueda);
 
-            // **NUEVO: Filtro Solo Diferencias**
             chkSoloDiferencias = new CheckBox
             {
                 Text = "📊 Solo Diferencias",
-                Location = new Point(320, 555),
-                Size = new Size(150, 25),
+                Location = new Point(380, 558),
+                Size = new Size(180, 25),
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(220, 53, 69)
             };
             chkSoloDiferencias.CheckedChanged += ChkSoloDiferencias_CheckedChanged;
             panelEscaneo.Controls.Add(chkSoloDiferencias);
 
-            // Botones finales
+            // FILA 2: Botones de Acción (Y = 590 - con más separación)
             btnFinalizar = new Button
             {
                 Text = "💾 FINALIZAR Y GUARDAR",
-                Location = new Point(350, 560),
-                Size = new Size(220, 40),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Color.FromArgb(0, 150, 0),
+                Location = new Point(30, 590),
+                Size = new Size(250, 40),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                BackColor = Color.FromArgb(40, 167, 69),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand
@@ -386,10 +390,10 @@ namespace Inventario
             btnGenerarReporte = new Button
             {
                 Text = "📧 GENERAR REPORTE",
-                Location = new Point(580, 560),
-                Size = new Size(200, 40),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Color.FromArgb(41, 128, 185),
+                Location = new Point(300, 590),
+                Size = new Size(250, 40),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                BackColor = Color.FromArgb(0, 123, 255),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
@@ -402,10 +406,10 @@ namespace Inventario
             btnCancelar = new Button
             {
                 Text = "❌ CANCELAR",
-                Location = new Point(790, 560),
-                Size = new Size(150, 40),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Color.FromArgb(200, 50, 50),
+                Location = new Point(570, 590),
+                Size = new Size(200, 40),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                BackColor = Color.FromArgb(220, 53, 69),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand
@@ -524,7 +528,7 @@ namespace Inventario
 
             Label lblFooter = new Label
             {
-                Text = "StockControl v1.2.1 | Desarrollado por Fernando Carrasco",
+                Text = "StockControl v1.2.2 | Desarrollado por Fernando Carrasco",
                 Location = new Point(20, 10),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9),
@@ -941,7 +945,7 @@ namespace Inventario
         private void BtnGenerarReporte_Click(object sender, EventArgs e)
         {
             var resultado = MessageBox.Show(
-                "¿Generar reporte y abrir en Outlook?\n\nSe creará un correo con el reporte HTML.",
+                "¿Generar reporte y abrir en Outlook?\n\nSe creará un correo con el archivo Excel adjunto.",
                 "Generar Reporte",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
@@ -978,12 +982,11 @@ namespace Inventario
         {
             try
             {
+                // Calcular estadísticas
                 int productosSobrantes = 0;
                 int productosFaltantes = 0;
                 int productosCorrectos = 0;
                 int totalArticulos = 0;
-
-                var productosDiferentes = new System.Collections.Generic.List<string>();
 
                 foreach (DataGridViewRow row in dgvInventario.Rows)
                 {
@@ -993,100 +996,64 @@ namespace Inventario
                     if (diferencia > 0) productosSobrantes++;
                     else if (diferencia < 0) productosFaltantes++;
                     else productosCorrectos++;
-
-                    if (diferencia != 0)
-                    {
-                        string colorFondo = diferencia > 0 ? "#fff3cd" : "#f8d7da";
-                        string colorTexto = diferencia > 0 ? "#856404" : "#721c24";
-
-                        productosDiferentes.Add($@"
-                            <tr style='background-color: {colorFondo};'>
-                                <td style='padding: 12px; border: 1px solid #dee2e6;'>{row.Cells["Codigo"].Value}</td>
-                                <td style='padding: 12px; border: 1px solid #dee2e6;'>{row.Cells["EAN"].Value}</td>
-                                <td style='padding: 12px; border: 1px solid #dee2e6;'>{row.Cells["Detalle"].Value}</td>
-                                <td style='padding: 12px; border: 1px solid #dee2e6; text-align: center;'>{row.Cells["StockSistema"].Value}</td>
-                                <td style='padding: 12px; border: 1px solid #dee2e6; text-align: center;'>{row.Cells["StockContado"].Value}</td>
-                                <td style='padding: 12px; border: 1px solid #dee2e6; text-align: center; font-weight: bold; color: {colorTexto};'>{diferencia:+#;-#;0}</td>
-                            </tr>");
-                    }
                 }
 
+                // Cuerpo del email simple y profesional
                 string htmlBody = $@"
 <html>
 <head>
     <style>
-        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; }}
-        .header {{ background-color: #2980b9; color: white; padding: 20px; text-align: center; }}
-        .content {{ padding: 20px; }}
-        .summary {{ background-color: #ecf0f1; padding: 15px; border-radius: 5px; margin: 20px 0; }}
-        .summary-item {{ display: inline-block; margin: 10px 20px; }}
-        .summary-label {{ font-weight: bold; color: #2c3e50; }}
-        .summary-value {{ font-size: 24px; font-weight: bold; color: #2980b9; }}
-        table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
-        th {{ background-color: #34495e; color: white; padding: 12px; text-align: left; border: 1px solid #2c3e50; }}
-        td {{ padding: 12px; border: 1px solid #dee2e6; }}
-        .footer {{ text-align: center; padding: 20px; color: #7f8c8d; font-size: 12px; }}
-        .badge {{ display: inline-block; padding: 5px 10px; border-radius: 3px; font-weight: bold; }}
-        .badge-success {{ background-color: #d4edda; color: #155724; }}
-        .badge-warning {{ background-color: #fff3cd; color: #856404; }}
-        .badge-danger {{ background-color: #f8d7da; color: #721c24; }}
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6; }}
+        .container {{ max-width: 550px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: #2980b9; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
+        .header h2 {{ margin: 0; font-size: 20px; }}
+        .content {{ background: #fff; padding: 25px; border: 1px solid #ddd; border-top: none; }}
+        .info {{ margin: 20px 0; padding: 15px; background: #f8f9fa; border-left: 4px solid #2980b9; }}
+        .stats {{ display: flex; justify-content: space-around; margin: 20px 0; }}
+        .stat {{ text-align: center; }}
+        .stat-num {{ font-size: 32px; font-weight: bold; }}
+        .correct {{ color: #28a745; }}
+        .excess {{ color: #ffc107; }}
+        .shortage {{ color: #dc3545; }}
+        .footer {{ text-align: center; padding: 15px; color: #999; font-size: 11px; }}
     </style>
 </head>
 <body>
-    <div class='header'>
-        <h1>REPORTE DE INVENTARIO SELECTIVO</h1>
-        <p>Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}</p>
-    </div>
-
-    <div class='content'>
-        <h2>Información del Inventario</h2>
-        <p><strong>Almacén:</strong> {almacenSeleccionado}</p>
-        <p><strong>Clasificaciones:</strong> {string.Join(", ", clasificacionesSeleccionadas)}</p>
-        <p><strong>Total de Artículos:</strong> {totalArticulos}</p>
-
-        <div class='summary'>
-            <h3 style='margin-top: 0; color: #2c3e50;'>Resumen de Resultados</h3>
-            <div class='summary-item'>
-                <div class='summary-label'>Productos Correctos</div>
-                <div class='summary-value' style='color: #27ae60;'>{productosCorrectos}</div>
-                <span class='badge badge-success'>✓ Sin diferencias</span>
-            </div>
-            <div class='summary-item'>
-                <div class='summary-label'>Productos con Sobrante</div>
-                <div class='summary-value' style='color: #f39c12;'>{productosSobrantes}</div>
-                <span class='badge badge-warning'>↑ Excedente</span>
-            </div>
-            <div class='summary-item'>
-                <div class='summary-label'>Productos con Faltante</div>
-                <div class='summary-value' style='color: #e74c3c;'>{productosFaltantes}</div>
-                <span class='badge badge-danger'>↓ Faltante</span>
-            </div>
+    <div class='container'>
+        <div class='header'>
+            <h2>📦 Inventario Selectivo</h2>
         </div>
 
-        <h3>Detalle de Diferencias</h3>
-        {(productosDiferentes.Count > 0 ?
-            $@"<table>
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>EAN</th>
-                        <th>Descripción</th>
-                        <th style='text-align: center;'>Stock Sistema</th>
-                        <th style='text-align: center;'>Stock Contado</th>
-                        <th style='text-align: center;'>Diferencia</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {string.Join("", productosDiferentes)}
-                </tbody>
-            </table>" :
-            "<p style='text-align: center; padding: 20px; background-color: #d4edda; color: #155724; border-radius: 5px;'><strong>¡Excelente!</strong> No se encontraron diferencias en el inventario.</p>"
-        )}
-    </div>
+        <div class='content'>
+            <p><strong>Almacén:</strong> {almacenSeleccionado}<br>
+            <strong>Clasificaciones:</strong> {string.Join(", ", clasificacionesSeleccionadas)}<br>
+            <strong>Fecha:</strong> {DateTime.Now:dd/MM/yyyy HH:mm}</p>
 
-    <div class='footer'>
-        <p>StockControl v1.2.1 | Desarrollado por Fernando Carrasco</p>
-        <p>Este reporte fue generado automáticamente el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm}</p>
+            <div class='stats'>
+                <div class='stat'>
+                    <div class='stat-num correct'>{productosCorrectos}</div>
+                    <div>Correctos</div>
+                </div>
+                <div class='stat'>
+                    <div class='stat-num excess'>{productosSobrantes}</div>
+                    <div>Sobrantes</div>
+                </div>
+                <div class='stat'>
+                    <div class='stat-num shortage'>{productosFaltantes}</div>
+                    <div>Faltantes</div>
+                </div>
+            </div>
+
+            <div class='info'>
+                📎 Ver detalle completo en el archivo Excel adjunto.
+            </div>
+
+            <p>Saludos,<br><strong>StockControl v1.2.2</strong></p>
+        </div>
+
+        <div class='footer'>
+            Desarrollado por Fernando Carrasco
+        </div>
     </div>
 </body>
 </html>";
@@ -1095,12 +1062,21 @@ namespace Inventario
                 dynamic outlook = System.Activator.CreateInstance(System.Type.GetTypeFromProgID("Outlook.Application"));
                 dynamic mail = outlook.CreateItem(0); // 0 = MailItem
 
-                mail.Subject = $"Inventario Selectivo {DateTime.Now:dd/MM/yyyy} - Almacén {almacenSeleccionado}";
+                mail.Subject = $"📦 Inventario Selectivo - {almacenSeleccionado} - {DateTime.Now:dd/MM/yyyy}";
                 mail.HTMLBody = htmlBody;
-                mail.Display();
 
-                MessageBox.Show("Se ha generado el reporte en Outlook.\n\nPor favor, revise el correo y envíelo a los destinatarios correspondientes.",
-                    "Reporte Generado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Adjuntar el archivo Excel si existe
+                if (!string.IsNullOrEmpty(archivoExcelRespaldo) && File.Exists(archivoExcelRespaldo))
+                {
+                    mail.Attachments.Add(archivoExcelRespaldo);
+                }
+                else
+                {
+                    MessageBox.Show("Advertencia: No se pudo encontrar el archivo Excel de respaldo.\n\nEl correo se generará sin adjunto.",
+                        "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                mail.Display();
             }
             catch (Exception ex)
             {
@@ -1258,6 +1234,9 @@ namespace Inventario
                     dataRange.Style.Border.InsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
 
                     workbook.SaveAs(rutaCompleta);
+
+                    // Guardar la ruta para adjuntar en el email
+                    archivoExcelRespaldo = rutaCompleta;
                 }
             }
             catch (Exception ex)
