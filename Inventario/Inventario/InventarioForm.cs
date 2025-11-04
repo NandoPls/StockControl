@@ -11,8 +11,9 @@ namespace Inventario
 {
     public partial class InventarioForm : Form
     {
-        private Dictionary<string, ProductoExcel> productosParaInventariar;
-        private Dictionary<string, int> conteoActual;
+        private Dictionary<string, ProductoExcel> productosParaInventariar; // Key: ItemCode
+        private Dictionary<string, int> conteoActual; // Key: ItemCode
+        private Dictionary<string, List<string>> eanToItemCodes; // Lookup: EAN -> List of ItemCodes
         private string almacenSeleccionado;
         private List<string> clasificacionesSeleccionadas;
 
@@ -51,6 +52,7 @@ namespace Inventario
             InicializarComponentes();
             productosParaInventariar = new Dictionary<string, ProductoExcel>();
             conteoActual = new Dictionary<string, int>();
+            eanToItemCodes = new Dictionary<string, List<string>>();
             clasificacionesSeleccionadas = new List<string>();
             ConfigurarIcono();
             ConfigurarAutoguardado();
@@ -522,7 +524,7 @@ namespace Inventario
 
             Label lblFooter = new Label
             {
-                Text = "StockControl v1.2.0 | Desarrollado por Fernando Carrasco",
+                Text = "StockControl v1.2.1 | Desarrollado por Fernando Carrasco",
                 Location = new Point(20, 10),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9),
@@ -695,6 +697,7 @@ namespace Inventario
             // Cargar productos a inventariar
             productosParaInventariar.Clear();
             conteoActual.Clear();
+            eanToItemCodes.Clear();
             dgvInventario.Rows.Clear();
 
             // Cargar productos según el tipo de clasificación seleccionado
@@ -716,10 +719,20 @@ namespace Inventario
 
             foreach (var producto in productos)
             {
-                if (!productosParaInventariar.ContainsKey(producto.CodeBars))
+                // Usar ItemCode como clave única (permite duplicados de EAN)
+                string key = producto.ItemCode;
+
+                if (!productosParaInventariar.ContainsKey(key))
                 {
-                    productosParaInventariar[producto.CodeBars] = producto;
-                    conteoActual[producto.CodeBars] = 0;
+                    productosParaInventariar[key] = producto;
+                    conteoActual[key] = 0;
+
+                    // Mantener lookup de EAN -> ItemCode para escaneo
+                    if (!eanToItemCodes.ContainsKey(producto.CodeBars))
+                    {
+                        eanToItemCodes[producto.CodeBars] = new List<string>();
+                    }
+                    eanToItemCodes[producto.CodeBars].Add(key);
 
                     int rowIndex = dgvInventario.Rows.Add();
                     DataGridViewRow row = dgvInventario.Rows[rowIndex];
@@ -766,44 +779,54 @@ namespace Inventario
             if (string.IsNullOrEmpty(codigoEscaneado))
                 return;
 
-            if (productosParaInventariar.ContainsKey(codigoEscaneado))
+            // Buscar por EAN en el lookup
+            if (eanToItemCodes.ContainsKey(codigoEscaneado))
             {
-                conteoActual[codigoEscaneado]++;
+                List<string> itemCodes = eanToItemCodes[codigoEscaneado];
 
-                // Actualizar DataGridView
-                foreach (DataGridViewRow row in dgvInventario.Rows)
+                // Incrementar el conteo para TODOS los productos con este EAN
+                foreach (string itemCode in itemCodes)
                 {
-                    if (row.Cells["EAN"].Value.ToString() == codigoEscaneado)
+                    if (conteoActual.ContainsKey(itemCode))
                     {
-                        int stockSistema = Convert.ToInt32(row.Cells["StockSistema"].Value);
-                        int stockContado = conteoActual[codigoEscaneado];
-                        int diferencia = stockContado - stockSistema;
+                        conteoActual[itemCode]++;
+                    }
 
-                        row.Cells["StockContado"].Value = stockContado;
-                        row.Cells["Diferencia"].Value = diferencia;
-
-                        // Colorear según diferencia
-                        if (diferencia == 0)
+                    // Actualizar DataGridView
+                    foreach (DataGridViewRow row in dgvInventario.Rows)
+                    {
+                        if (row.Cells["Codigo"].Value.ToString() == itemCode)
                         {
-                            row.DefaultCellStyle.BackColor = Color.FromArgb(220, 255, 220); // Verde claro
-                        }
-                        else if (diferencia > 0)
-                        {
-                            row.DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 200); // Amarillo
-                        }
-                        else
-                        {
-                            row.DefaultCellStyle.BackColor = Color.FromArgb(255, 240, 240); // Rojo claro
-                        }
+                            int stockSistema = Convert.ToInt32(row.Cells["StockSistema"].Value);
+                            int stockContado = conteoActual[itemCode];
+                            int diferencia = stockContado - stockSistema;
 
-                        dgvInventario.FirstDisplayedScrollingRowIndex = row.Index;
-                        row.Selected = true;
+                            row.Cells["StockContado"].Value = stockContado;
+                            row.Cells["Diferencia"].Value = diferencia;
 
-                        SystemSounds.Beep.Play();
-                        break;
+                            // Colorear según diferencia
+                            if (diferencia == 0)
+                            {
+                                row.DefaultCellStyle.BackColor = Color.FromArgb(220, 255, 220); // Verde claro
+                            }
+                            else if (diferencia > 0)
+                            {
+                                row.DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 200); // Amarillo
+                            }
+                            else
+                            {
+                                row.DefaultCellStyle.BackColor = Color.FromArgb(255, 240, 240); // Rojo claro
+                            }
+
+                            dgvInventario.FirstDisplayedScrollingRowIndex = row.Index;
+                            row.Selected = true;
+
+                            break;
+                        }
                     }
                 }
 
+                SystemSounds.Beep.Play();
                 ActualizarProgreso();
                 ActualizarEstadisticas();
             }
@@ -822,7 +845,7 @@ namespace Inventario
             if (e.ColumnIndex == dgvInventario.Columns["StockContado"].Index)
             {
                 var row = dgvInventario.Rows[e.RowIndex];
-                string ean = row.Cells["EAN"].Value.ToString();
+                string itemCode = row.Cells["Codigo"].Value.ToString();
 
                 if (int.TryParse(row.Cells["StockContado"].Value?.ToString(), out int nuevoValor))
                 {
@@ -830,12 +853,12 @@ namespace Inventario
                     {
                         MessageBox.Show("El stock contado no puede ser negativo.", "Valor inválido",
                             MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        row.Cells["StockContado"].Value = conteoActual[ean];
+                        row.Cells["StockContado"].Value = conteoActual[itemCode];
                         return;
                     }
 
                     // Actualizar el conteo actual
-                    conteoActual[ean] = nuevoValor;
+                    conteoActual[itemCode] = nuevoValor;
 
                     // Recalcular diferencia
                     int stockSistema = Convert.ToInt32(row.Cells["StockSistema"].Value);
@@ -863,7 +886,7 @@ namespace Inventario
                 {
                     MessageBox.Show("Por favor, ingrese un número válido.", "Valor inválido",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    row.Cells["StockContado"].Value = conteoActual[ean];
+                    row.Cells["StockContado"].Value = conteoActual[itemCode];
                 }
             }
         }
@@ -1062,7 +1085,7 @@ namespace Inventario
     </div>
 
     <div class='footer'>
-        <p>StockControl v1.2.0 | Desarrollado por Fernando Carrasco</p>
+        <p>StockControl v1.2.1 | Desarrollado por Fernando Carrasco</p>
         <p>Este reporte fue generado automáticamente el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm}</p>
     </div>
 </body>
@@ -1371,15 +1394,25 @@ namespace Inventario
                         .ToList();
 
                     productosParaInventariar.Clear();
+                    eanToItemCodes.Clear();
                     dgvInventario.Rows.Clear();
 
                     foreach (var producto in productos)
                     {
-                        if (!productosParaInventariar.ContainsKey(producto.CodeBars))
-                        {
-                            productosParaInventariar[producto.CodeBars] = producto;
+                        string key = producto.ItemCode;
 
-                            int stockContado = conteoActual.ContainsKey(producto.CodeBars) ? conteoActual[producto.CodeBars] : 0;
+                        if (!productosParaInventariar.ContainsKey(key))
+                        {
+                            productosParaInventariar[key] = producto;
+
+                            // Mantener lookup de EAN -> ItemCode
+                            if (!eanToItemCodes.ContainsKey(producto.CodeBars))
+                            {
+                                eanToItemCodes[producto.CodeBars] = new List<string>();
+                            }
+                            eanToItemCodes[producto.CodeBars].Add(key);
+
+                            int stockContado = conteoActual.ContainsKey(key) ? conteoActual[key] : 0;
 
                             int rowIndex = dgvInventario.Rows.Add();
                             DataGridViewRow row = dgvInventario.Rows[rowIndex];
