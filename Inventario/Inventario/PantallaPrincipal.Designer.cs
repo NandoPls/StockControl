@@ -164,7 +164,7 @@
             lblVersion.Name = "lblVersion";
             lblVersion.Size = new Size(175, 15);
             lblVersion.TabIndex = 0;
-            lblVersion.Text = "StockControl v1.2.3 | Desarrollado por Fernando Carrasco";
+            lblVersion.Text = "StockControl v1.2.4 | Desarrollado por Fernando Carrasco";
             //
             // PantallaPrincipal
             //

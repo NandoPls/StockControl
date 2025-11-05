@@ -124,12 +124,30 @@ namespace Inventario
                 // Cargar datos del Excel
                 if (ExcelDataManager.CargarExcel(archivoExcelSeleccionado!))
                 {
-                    MessageBox.Show($"✅ Archivo Excel cargado exitosamente.\n\nProductos cargados: {ExcelDataManager.ProductosExcel.Count}",
+                    // Calcular stock total
+                    int stockTotal = ExcelDataManager.ProductosExcel.Sum(p => p.StockTienda);
+                    int cantidadProductos = ExcelDataManager.ProductosExcel.Count;
+
+                    MessageBox.Show($"✅ Archivo Excel cargado exitosamente.\n\n" +
+                                  $"Productos: {cantidadProductos}\n" +
+                                  $"Stock Total: {stockTotal:N0} unidades",
                         "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // Ocultar ventana principal
+                    this.Hide();
 
                     // Abrir ventana de inventario
                     InventarioForm formInventario = new InventarioForm();
-                    formInventario.ShowDialog();
+                    DialogResult resultado = formInventario.ShowDialog();
+
+                    // Mostrar ventana principal nuevamente
+                    this.Show();
+
+                    // Si se finalizó el inventario exitosamente, cerrar la aplicación
+                    if (resultado == DialogResult.OK)
+                    {
+                        this.Close();
+                    }
                 }
                 else
                 {
@@ -170,9 +188,21 @@ namespace Inventario
                 // Marcar que estamos usando SAP
                 ExcelDataManager.ConfigurarOrigenDatos("SAP");
 
+                // Ocultar ventana principal
+                this.Hide();
+
                 // Abrir ventana de inventario
                 InventarioForm formInventario = new InventarioForm();
-                formInventario.ShowDialog();
+                DialogResult resultado = formInventario.ShowDialog();
+
+                // Mostrar ventana principal nuevamente
+                this.Show();
+
+                // Si se finalizó el inventario exitosamente, cerrar la aplicación
+                if (resultado == DialogResult.OK)
+                {
+                    this.Close();
+                }
             }
             catch (Exception ex)
             {
