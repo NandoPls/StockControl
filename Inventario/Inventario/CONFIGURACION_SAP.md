@@ -1,13 +1,13 @@
 # 🔌 Configuración de Integración con SAP Business One
 
-StockControl v1.2.2 incluye soporte para integración directa con SAP Business One. Esta guía te ayudará a configurarlo.
+StockControl v1.2.3 incluye soporte para integración directa con SAP Business One. Esta guía te ayudará a configurarlo.
 
 ## 📋 Requisitos Previos
 
 - SAP Business One instalado y funcionando
 - SQL Server accesible (mismo servidor o remoto)
 - Credenciales de base de datos SAP
-- StockControl v1.2.2 o superior
+- StockControl v1.2.3 o superior
 
 ## ⚙️ Configuración Paso a Paso
 
@@ -180,4 +180,4 @@ Para problemas de configuración:
 ---
 
 **Desarrollado por Fernando Carrasco**
-**StockControl v1.2.2**
+**StockControl v1.2.3**

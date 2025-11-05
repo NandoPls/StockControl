@@ -16,6 +16,13 @@ namespace Inventario
             ConfigurarEstiloInicial();
             ConfigurarIcono();
             VerificarConfiguracionSap();
+            this.Load += PantallaPrincipal_Load;
+        }
+
+        private async void PantallaPrincipal_Load(object? sender, EventArgs e)
+        {
+            // Verificar actualizaciones en segundo plano
+            await AutoUpdater.CheckForUpdates(this);
         }
 
         private void ConfigurarEstiloInicial()

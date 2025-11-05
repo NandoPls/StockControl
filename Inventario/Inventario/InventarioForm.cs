@@ -528,7 +528,7 @@ namespace Inventario
 
             Label lblFooter = new Label
             {
-                Text = "StockControl v1.2.2 | Desarrollado por Fernando Carrasco",
+                Text = "StockControl v1.2.3 | Desarrollado por Fernando Carrasco",
                 Location = new Point(20, 10),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9),
@@ -1048,7 +1048,7 @@ namespace Inventario
                 📎 Ver detalle completo en el archivo Excel adjunto.
             </div>
 
-            <p>Saludos,<br><strong>StockControl v1.2.2</strong></p>
+            <p>Saludos,<br><strong>StockControl v1.2.3</strong></p>
         </div>
 
         <div class='footer'>
