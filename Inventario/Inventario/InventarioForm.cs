@@ -35,7 +35,6 @@ namespace Inventario
         private Panel panelEscaneo;
 
         // Nuevos controles para mejoras v1.1.0
-        private TextBox txtBusqueda;
         private CheckBox chkSoloDiferencias;
         private Panel panelEstadisticas;
         private Label lblTotalProductos;
@@ -110,7 +109,7 @@ namespace Inventario
         private void InicializarComponentes()
         {
             this.Text = "StockControl - Conteo de Inventario";
-            this.Size = new Size(1000, 735);
+            this.Size = new Size(1280, 800);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(240, 240, 240);
 
@@ -118,7 +117,7 @@ namespace Inventario
             panelSeleccion = new Panel
             {
                 Location = new Point(20, 20),
-                Size = new Size(940, 300),
+                Size = new Size(1220, 320),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
             };
@@ -248,7 +247,7 @@ namespace Inventario
             panelEscaneo = new Panel
             {
                 Location = new Point(20, 20),
-                Size = new Size(940, 630),
+                Size = new Size(1220, 710),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
                 Visible = false
@@ -264,30 +263,11 @@ namespace Inventario
             };
             panelEscaneo.Controls.Add(lblTituloEscaneo);
 
-            lblInstruccion = new Label
-            {
-                Text = "Escanee el código de barras del producto:",
-                Location = new Point(30, 70),
-                Size = new Size(500, 25),
-                Font = new Font("Segoe UI", 11, FontStyle.Bold)
-            };
-            panelEscaneo.Controls.Add(lblInstruccion);
-
-            txtEscaneo = new TextBox
-            {
-                Location = new Point(30, 100),
-                Size = new Size(500, 35),
-                Font = new Font("Segoe UI", 14),
-                BackColor = Color.FromArgb(255, 255, 200)
-            };
-            txtEscaneo.KeyPress += TxtEscaneo_KeyPress;
-            panelEscaneo.Controls.Add(txtEscaneo);
-
             lblProgreso = new Label
             {
-                Text = "Productos inventariados: 0 de 0",
-                Location = new Point(550, 70),
-                Size = new Size(350, 60),
+                Text = "Stock Total: 0 de 0 unidades",
+                Location = new Point(30, 60),
+                Size = new Size(400, 40),
                 Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 ForeColor = Color.FromArgb(0, 122, 204),
                 TextAlign = ContentAlignment.MiddleCenter,
@@ -299,13 +279,15 @@ namespace Inventario
             // DataGridView para mostrar inventario
             dgvInventario = new DataGridView
             {
-                Location = new Point(30, 150),
-                Size = new Size(880, 400),
+                Location = new Point(30, 110),
+                Size = new Size(1160, 480),
                 Font = new Font("Segoe UI", 10),
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 ReadOnly = false,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                SelectionMode = DataGridViewSelectionMode.CellSelect,
+                MultiSelect = false,
+                ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 BackgroundColor = Color.White,
                 BorderStyle = BorderStyle.Fixed3D
@@ -316,6 +298,7 @@ namespace Inventario
             dgvInventario.Columns.Add("Detalle", "Detalle");
             dgvInventario.Columns.Add("Codigo", "Código");
             dgvInventario.Columns.Add("EAN", "EAN");
+            dgvInventario.Columns.Add("Descripcion", "Descripción");
             dgvInventario.Columns.Add("StockSistema", "Stock Sistema");
             dgvInventario.Columns.Add("StockContado", "Stock Contado");
             dgvInventario.Columns.Add("Diferencia", "Diferencia");
@@ -337,46 +320,63 @@ namespace Inventario
             panelEscaneo.Controls.Add(dgvInventario);
 
             // ============================================
-            // PANEL INFERIOR REORGANIZADO
+            // PANEL INFERIOR REORGANIZADO - BUSCADOR ABAJO
             // ============================================
 
-            // FILA 1: Búsqueda y Filtros (Y = 555)
-            Label lblBusqueda = new Label
+            // FILA 1: Barra de escaneo (Y = 600)
+            lblInstruccion = new Label
             {
-                Text = "🔍 Buscar:",
-                Location = new Point(30, 558),
-                Size = new Size(70, 25),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                Text = "👇 Escanea aquí el código de barras con la pistola POS:",
+                Location = new Point(30, 603),
+                Size = new Size(450, 30),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.FromArgb(0, 122, 204),
+                TextAlign = ContentAlignment.MiddleLeft
             };
-            panelEscaneo.Controls.Add(lblBusqueda);
+            panelEscaneo.Controls.Add(lblInstruccion);
 
-            txtBusqueda = new TextBox
+            txtEscaneo = new TextBox
             {
-                Location = new Point(105, 556),
-                Size = new Size(250, 25),
-                Font = new Font("Segoe UI", 10),
-                PlaceholderText = "Código, EAN o Detalle..."
+                Location = new Point(490, 598),
+                Size = new Size(670, 40),
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                BackColor = Color.FromArgb(255, 255, 180),
+                ForeColor = Color.FromArgb(0, 0, 0),
+                BorderStyle = BorderStyle.FixedSingle,
+                TextAlign = HorizontalAlignment.Center
             };
-            txtBusqueda.TextChanged += TxtBusqueda_TextChanged;
-            panelEscaneo.Controls.Add(txtBusqueda);
+            txtEscaneo.KeyPress += TxtEscaneo_KeyPress;
+            panelEscaneo.Controls.Add(txtEscaneo);
 
+            // Panel decorativo alrededor del input para hacerlo más visible
+            Panel panelInputBorder = new Panel
+            {
+                Location = new Point(485, 593),
+                Size = new Size(680, 50),
+                BackColor = Color.FromArgb(0, 122, 204),
+                BorderStyle = BorderStyle.None
+            };
+            panelEscaneo.Controls.Add(panelInputBorder);
+            txtEscaneo.BringToFront();
+
+            // FILA 2: Solo Diferencias (Y = 635)
             chkSoloDiferencias = new CheckBox
             {
                 Text = "📊 Solo Diferencias",
-                Location = new Point(380, 558),
+                Location = new Point(30, 638),
                 Size = new Size(180, 25),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Color.FromArgb(220, 53, 69)
             };
             chkSoloDiferencias.CheckedChanged += ChkSoloDiferencias_CheckedChanged;
             panelEscaneo.Controls.Add(chkSoloDiferencias);
 
-            // FILA 2: Botones de Acción (Y = 590 - con más separación)
+            // FILA 3: Botones de Acción - Más a la derecha (Y = 668)
             btnFinalizar = new Button
             {
                 Text = "💾 FINALIZAR Y GUARDAR",
-                Location = new Point(30, 590),
-                Size = new Size(250, 40),
+                Location = new Point(620, 668),
+                Size = new Size(280, 35),
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Color.FromArgb(40, 167, 69),
                 ForeColor = Color.White,
@@ -390,8 +390,8 @@ namespace Inventario
             btnGenerarReporte = new Button
             {
                 Text = "📧 GENERAR REPORTE",
-                Location = new Point(300, 590),
-                Size = new Size(250, 40),
+                Location = new Point(340, 668),
+                Size = new Size(260, 35),
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Color.FromArgb(0, 123, 255),
                 ForeColor = Color.White,
@@ -406,8 +406,8 @@ namespace Inventario
             btnCancelar = new Button
             {
                 Text = "❌ CANCELAR",
-                Location = new Point(570, 590),
-                Size = new Size(200, 40),
+                Location = new Point(920, 668),
+                Size = new Size(200, 35),
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Color.FromArgb(220, 53, 69),
                 ForeColor = Color.White,
@@ -528,7 +528,7 @@ namespace Inventario
 
             Label lblFooter = new Label
             {
-                Text = "StockControl v1.2.3 | Desarrollado por Fernando Carrasco",
+                Text = "StockControl v1.2.6 | Desarrollado por Fernando Carrasco",
                 Location = new Point(20, 10),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9),
@@ -571,7 +571,7 @@ namespace Inventario
 
             // Cargar clasificaciones por Tipo (ItmsGrpNam)
             var clasificaciones = ExcelDataManager.ProductosExcel
-                .Where(p => p.WhsCode == almacenSeleccionado)
+                .Where(p => p.WhsCode == almacenSeleccionado && !string.IsNullOrWhiteSpace(p.ItmsGrpNam))
                 .Select(p => p.ItmsGrpNam)
                 .Distinct()
                 .OrderBy(c => c)
@@ -721,9 +721,10 @@ namespace Inventario
                     .ToList();
             }
 
+            // Los datos ya están correctos desde la lectura del Excel
+            // (ExcelDataManager ya corrige el orden de columnas para almacén 1005)
             foreach (var producto in productos)
             {
-                // Usar ItemCode como clave única (permite duplicados de EAN)
                 string key = producto.ItemCode;
 
                 if (!productosParaInventariar.ContainsKey(key))
@@ -745,6 +746,7 @@ namespace Inventario
                     row.Cells["Detalle"].Value = producto.U_Comercial3;
                     row.Cells["Codigo"].Value = producto.ItemCode;
                     row.Cells["EAN"].Value = producto.CodeBars;
+                    row.Cells["Descripcion"].Value = producto.ItemName;
                     row.Cells["StockSistema"].Value = producto.StockTienda;
                     row.Cells["StockContado"].Value = 0;
                     row.Cells["Diferencia"].Value = -producto.StockTienda;
@@ -822,8 +824,14 @@ namespace Inventario
                                 row.DefaultCellStyle.BackColor = Color.FromArgb(255, 240, 240); // Rojo claro
                             }
 
-                            dgvInventario.FirstDisplayedScrollingRowIndex = row.Index;
-                            row.Selected = true;
+                            // Scroll hacia la fila y seleccionar celda de Stock Contado
+                            // Solo hacer scroll si la fila está visible
+                            if (row.Visible)
+                            {
+                                dgvInventario.FirstDisplayedScrollingRowIndex = row.Index;
+                                dgvInventario.CurrentCell = row.Cells["StockContado"];
+                                row.Cells["StockContado"].Selected = true;
+                            }
 
                             break;
                         }
@@ -833,6 +841,9 @@ namespace Inventario
                 SystemSounds.Beep.Play();
                 ActualizarProgreso();
                 ActualizarEstadisticas();
+
+                // Reaplicar filtros para mostrar/ocultar filas según nueva diferencia
+                AplicarFiltros();
             }
             else
             {
@@ -885,6 +896,9 @@ namespace Inventario
 
                     ActualizarProgreso();
                     ActualizarEstadisticas();
+
+                    // Reaplicar filtros para mostrar/ocultar filas según nueva diferencia
+                    AplicarFiltros();
                 }
                 else
                 {
@@ -897,11 +911,13 @@ namespace Inventario
 
         private void ActualizarProgreso()
         {
-            int totalProductos = productosParaInventariar.Count;
-            int productosInventariados = conteoActual.Count(c => c.Value > 0);
+            // Calcular stock total del sistema
+            int stockTotalSistema = productosParaInventariar.Values.Sum(p => p.StockTienda);
 
-            lblProgreso.Text = $"Productos inventariados: {productosInventariados} de {totalProductos}\n" +
-                             $"Total escaneado: {conteoActual.Sum(c => c.Value)} unidades";
+            // Calcular stock total contado
+            int stockTotalContado = conteoActual.Sum(c => c.Value);
+
+            lblProgreso.Text = $"Stock Total: {stockTotalContado:N0} de {stockTotalSistema:N0} unidades";
         }
 
         private void BtnFinalizar_Click(object sender, EventArgs e)
@@ -1048,7 +1064,7 @@ namespace Inventario
                 📎 Ver detalle completo en el archivo Excel adjunto.
             </div>
 
-            <p>Saludos,<br><strong>StockControl v1.2.3</strong></p>
+            <p>Saludos,<br><strong>StockControl v1.2.6</strong></p>
         </div>
 
         <div class='footer'>
@@ -1400,6 +1416,7 @@ namespace Inventario
                             row.Cells["Detalle"].Value = producto.U_Comercial3;
                             row.Cells["Codigo"].Value = producto.ItemCode;
                             row.Cells["EAN"].Value = producto.CodeBars;
+                            row.Cells["Descripcion"].Value = producto.ItemName;
                             row.Cells["StockSistema"].Value = producto.StockTienda;
                             row.Cells["StockContado"].Value = stockContado;
                             row.Cells["Diferencia"].Value = stockContado - producto.StockTienda;
@@ -1436,42 +1453,6 @@ namespace Inventario
 
         #endregion
 
-        #region Búsqueda Rápida
-
-        private void TxtBusqueda_TextChanged(object sender, EventArgs e)
-        {
-            string busqueda = txtBusqueda.Text.Trim().ToLower();
-
-            if (string.IsNullOrEmpty(busqueda))
-            {
-                // Mostrar todas las filas (respetando filtro de diferencias si está activo)
-                AplicarFiltros();
-                return;
-            }
-
-            foreach (DataGridViewRow row in dgvInventario.Rows)
-            {
-                string codigo = row.Cells["Codigo"].Value?.ToString()?.ToLower() ?? "";
-                string ean = row.Cells["EAN"].Value?.ToString()?.ToLower() ?? "";
-                string detalle = row.Cells["Detalle"].Value?.ToString()?.ToLower() ?? "";
-
-                bool coincide = codigo.Contains(busqueda) || ean.Contains(busqueda) || detalle.Contains(busqueda);
-
-                // Si está activo el filtro de diferencias, también verificar eso
-                if (chkSoloDiferencias.Checked)
-                {
-                    int diferencia = Convert.ToInt32(row.Cells["Diferencia"].Value);
-                    row.Visible = coincide && diferencia != 0;
-                }
-                else
-                {
-                    row.Visible = coincide;
-                }
-            }
-        }
-
-        #endregion
-
         #region Filtro Solo Diferencias
 
         private void ChkSoloDiferencias_CheckedChanged(object sender, EventArgs e)
@@ -1481,30 +1462,20 @@ namespace Inventario
 
         private void AplicarFiltros()
         {
-            string busqueda = txtBusqueda.Text.Trim().ToLower();
             bool soloDiferencias = chkSoloDiferencias.Checked;
 
             foreach (DataGridViewRow row in dgvInventario.Rows)
             {
-                bool cumpleFiltros = true;
-
-                // Filtro de búsqueda
-                if (!string.IsNullOrEmpty(busqueda))
-                {
-                    string codigo = row.Cells["Codigo"].Value?.ToString()?.ToLower() ?? "";
-                    string ean = row.Cells["EAN"].Value?.ToString()?.ToLower() ?? "";
-                    string detalle = row.Cells["Detalle"].Value?.ToString()?.ToLower() ?? "";
-                    cumpleFiltros = codigo.Contains(busqueda) || ean.Contains(busqueda) || detalle.Contains(busqueda);
-                }
+                bool mostrarFila = true;
 
                 // Filtro de diferencias
-                if (cumpleFiltros && soloDiferencias)
+                if (soloDiferencias)
                 {
                     int diferencia = Convert.ToInt32(row.Cells["Diferencia"].Value);
-                    cumpleFiltros = diferencia != 0;
+                    mostrarFila = diferencia != 0;
                 }
 
-                row.Visible = cumpleFiltros;
+                row.Visible = mostrarFila;
             }
         }
 

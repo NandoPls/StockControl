@@ -170,6 +170,7 @@ namespace Inventario
                                 var producto = new ProductoExcel
                                 {
                                     ItemCode = reader["ItemCode"]?.ToString() ?? "",
+                                    ItemName = reader["ItemName"]?.ToString() ?? "",
                                     CodeBars = reader["CodeBars"]?.ToString() ?? "",
                                     StockTienda = Convert.ToInt32(reader["OnHand"]),
                                     WhsCode = reader["WhsCode"]?.ToString() ?? "",
@@ -245,6 +246,7 @@ namespace Inventario
                                 return new ProductoExcel
                                 {
                                     ItemCode = reader["ItemCode"]?.ToString() ?? "",
+                                    ItemName = reader["ItemName"]?.ToString() ?? "",
                                     CodeBars = reader["CodeBars"]?.ToString() ?? ean,
                                     StockTienda = Convert.ToInt32(reader["OnHand"]),
                                     WhsCode = reader["WhsCode"]?.ToString() ?? "",

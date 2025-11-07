@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -228,6 +229,29 @@ namespace Inventario
         {
             usarSap = true;
             CargarDesdeSap();
+        }
+
+        private void btnOpciones_Click(object sender, EventArgs e)
+        {
+            // Toggle panel visibility
+            panelOpciones.Visible = !panelOpciones.Visible;
+        }
+
+        private void btnAbrirCarpeta_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Get program installation directory
+                string programPath = AppDomain.CurrentDomain.BaseDirectory;
+
+                // Open folder in Windows Explorer
+                Process.Start("explorer.exe", programPath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al abrir la carpeta:\n\n{ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
     }

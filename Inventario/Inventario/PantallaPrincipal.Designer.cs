@@ -30,6 +30,9 @@
         {
             panelHeader = new Panel();
             lblTitulo = new Label();
+            btnOpciones = new Button();
+            panelOpciones = new Panel();
+            btnAbrirCarpeta = new Button();
             panelCentral = new Panel();
             btnContinuar = new Button();
             lblArchivoSeleccionado = new Label();
@@ -39,6 +42,7 @@
             panelFooter = new Panel();
             lblVersion = new Label();
             panelHeader.SuspendLayout();
+            panelOpciones.SuspendLayout();
             panelCentral.SuspendLayout();
             panelFooter.SuspendLayout();
             SuspendLayout();
@@ -46,11 +50,12 @@
             // panelHeader
             //
             panelHeader.BackColor = Color.FromArgb(41, 128, 185);
+            panelHeader.Controls.Add(btnOpciones);
             panelHeader.Controls.Add(lblTitulo);
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(0, 0);
             panelHeader.Name = "panelHeader";
-            panelHeader.Size = new Size(1000, 80);
+            panelHeader.Size = new Size(1280, 80);
             panelHeader.TabIndex = 0;
             //
             // lblTitulo
@@ -64,6 +69,49 @@
             lblTitulo.TabIndex = 0;
             lblTitulo.Text = "📦 StockControl";
             //
+            // btnOpciones
+            //
+            btnOpciones.BackColor = Color.FromArgb(52, 152, 219);
+            btnOpciones.Cursor = Cursors.Hand;
+            btnOpciones.FlatAppearance.BorderSize = 0;
+            btnOpciones.FlatStyle = FlatStyle.Flat;
+            btnOpciones.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnOpciones.ForeColor = Color.White;
+            btnOpciones.Location = new Point(1150, 25);
+            btnOpciones.Name = "btnOpciones";
+            btnOpciones.Size = new Size(100, 30);
+            btnOpciones.TabIndex = 1;
+            btnOpciones.Text = "⚙ Opciones";
+            btnOpciones.UseVisualStyleBackColor = false;
+            btnOpciones.Click += btnOpciones_Click;
+            //
+            // panelOpciones
+            //
+            panelOpciones.BackColor = Color.White;
+            panelOpciones.BorderStyle = BorderStyle.FixedSingle;
+            panelOpciones.Controls.Add(btnAbrirCarpeta);
+            panelOpciones.Location = new Point(1000, 85);
+            panelOpciones.Name = "panelOpciones";
+            panelOpciones.Size = new Size(250, 100);
+            panelOpciones.TabIndex = 3;
+            panelOpciones.Visible = false;
+            //
+            // btnAbrirCarpeta
+            //
+            btnAbrirCarpeta.BackColor = Color.FromArgb(52, 152, 219);
+            btnAbrirCarpeta.Cursor = Cursors.Hand;
+            btnAbrirCarpeta.FlatAppearance.BorderSize = 0;
+            btnAbrirCarpeta.FlatStyle = FlatStyle.Flat;
+            btnAbrirCarpeta.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnAbrirCarpeta.ForeColor = Color.White;
+            btnAbrirCarpeta.Location = new Point(15, 15);
+            btnAbrirCarpeta.Name = "btnAbrirCarpeta";
+            btnAbrirCarpeta.Size = new Size(220, 35);
+            btnAbrirCarpeta.TabIndex = 0;
+            btnAbrirCarpeta.Text = "📂 Abrir Carpeta del Programa";
+            btnAbrirCarpeta.UseVisualStyleBackColor = false;
+            btnAbrirCarpeta.Click += btnAbrirCarpeta_Click;
+            //
             // panelCentral
             //
             panelCentral.BackColor = Color.White;
@@ -72,7 +120,7 @@
             panelCentral.Controls.Add(btnCargarArchivo);
             panelCentral.Controls.Add(lblInstruccion);
             panelCentral.Controls.Add(lblBienvenida);
-            panelCentral.Location = new Point(150, 140);
+            panelCentral.Location = new Point(290, 160);
             panelCentral.Name = "panelCentral";
             panelCentral.Size = new Size(700, 400);
             panelCentral.TabIndex = 1;
@@ -150,9 +198,9 @@
             panelFooter.BackColor = Color.FromArgb(52, 73, 94);
             panelFooter.Controls.Add(lblVersion);
             panelFooter.Dock = DockStyle.Bottom;
-            panelFooter.Location = new Point(0, 580);
+            panelFooter.Location = new Point(0, 680);
             panelFooter.Name = "panelFooter";
-            panelFooter.Size = new Size(1000, 40);
+            panelFooter.Size = new Size(1280, 40);
             panelFooter.TabIndex = 2;
             //
             // lblVersion
@@ -164,14 +212,15 @@
             lblVersion.Name = "lblVersion";
             lblVersion.Size = new Size(175, 15);
             lblVersion.TabIndex = 0;
-            lblVersion.Text = "StockControl v1.2.5 | Desarrollado por Fernando Carrasco | Auto-Update ✓";
+            lblVersion.Text = "StockControl v1.2.6 | Desarrollado por Fernando Carrasco | Auto-Update ✓";
             //
             // PantallaPrincipal
             //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(240, 244, 248);
-            ClientSize = new Size(1000, 620);
+            ClientSize = new Size(1280, 720);
+            Controls.Add(panelOpciones);
             Controls.Add(panelFooter);
             Controls.Add(panelCentral);
             Controls.Add(panelHeader);
@@ -182,6 +231,7 @@
             Text = "StockControl - Gestión de Inventarios";
             panelHeader.ResumeLayout(false);
             panelHeader.PerformLayout();
+            panelOpciones.ResumeLayout(false);
             panelCentral.ResumeLayout(false);
             panelCentral.PerformLayout();
             panelFooter.ResumeLayout(false);
@@ -193,6 +243,9 @@
 
         private Panel panelHeader;
         private Label lblTitulo;
+        private Button btnOpciones;
+        private Panel panelOpciones;
+        private Button btnAbrirCarpeta;
         private Panel panelCentral;
         private Label lblBienvenida;
         private Label lblInstruccion;

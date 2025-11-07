@@ -78,6 +78,11 @@ namespace Inventario
                     {
                         try
                         {
+                            // Para TODOS los almacenes: columnas D y E están invertidas en el Excel
+                            // Excel: D=CodeBars/EAN, E=ItemCode
+                            string columnaD = fila.Cell(4).GetValue<string>()?.Trim() ?? "";
+                            string columnaE = fila.Cell(5).GetValue<string>()?.Trim() ?? "";
+
                             var producto = new ProductoExcel
                             {
                                 // Columna A: MARCA (ItmsGrpNam)
@@ -89,17 +94,19 @@ namespace Inventario
                                 // Columna C: Clasificación detallada (U_Comercial3)
                                 U_Comercial3 = fila.Cell(3).GetValue<string>()?.Trim() ?? "",
 
-                                // Columna D: CODIGO MADRE (ItemCode)
-                                ItemCode = fila.Cell(4).GetValue<string>()?.Trim() ?? "",
-
-                                // Columna E: EAN (código de barras) (CodeBars)
-                                CodeBars = fila.Cell(5).GetValue<string>()?.Trim() ?? "",
+                                // Columna D y E: SIEMPRE INVERTIDAS (todos los almacenes)
+                                // Excel tiene: D=CodeBars, E=ItemCode
+                                ItemCode = columnaE,  // Columna E del Excel
+                                CodeBars = columnaD,  // Columna D del Excel
 
                                 // Columna F: STOCK (Stock Tienda)
                                 StockTienda = ConvertirAEntero(fila.Cell(6).GetValue<string>()),
 
                                 // Columna G: ALMACEN (WhsCode)
-                                WhsCode = fila.Cell(7).GetValue<string>()?.Trim() ?? ""
+                                WhsCode = fila.Cell(7).GetValue<string>()?.Trim() ?? "",
+
+                                // Columna H: Descripción (ItemName) - opcional
+                                ItemName = fila.Cell(8).GetValue<string>()?.Trim() ?? ""
                             };
 
                             // Solo agregar si tiene datos válidos
@@ -194,6 +201,7 @@ namespace Inventario
         public string U_Comercial3 { get; set; }        // Clasificación detallada (Columna C)
         public string ItemCode { get; set; }            // CODIGO MADRE (Columna D)
         public string CodeBars { get; set; }            // EAN - Código de barras (Columna E)
+        public string ItemName { get; set; }            // Descripción del producto (Columna H si existe, o vacío)
         public int StockTienda { get; set; }            // STOCK (Columna F)
         public string WhsCode { get; set; }             // ALMACEN (Columna G)
     }

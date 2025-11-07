@@ -1,13 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nStockControl v1.0.0 - Sistema de Inventario Selectivo\n\nCaracterísticas principales:\n- Interfaz moderna con Windows Forms (.NET 8.0)\n- Carga de datos desde archivos Excel (ClosedXML)\n- Selección de almacén y múltiples clasificaciones\n- Escaneo con pistola POS\n- Edición manual de cantidades\n- Código de colores (verde/amarillo/rojo) para diferencias\n- Respaldo automático en Excel con formato profesional\n- Generación de reportes HTML en Outlook\n- Icono personalizado (📦 caja azul con checkmark verde)\n- CheckedListBox para selección múltiple\n- Botones separados: Finalizar y Guardar / Generar Reporte\n\nDesarrollado por Fernando Carrasco\nEOF\n)\")",
-      "Bash(git push:*)",
-      "Bash(git tag:*)",
-      "Bash(gh repo create:*)",
-      "Bash(git remote:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nStockControl v1.0.1 - Clasificación por Tipo o Subtipo\n\nNuevas características:\n- Opción para clasificar por Tipo (Marca) o Subtipo (Detalle)\n- RadioButtons para selección mutuamente exclusiva\n- Segundo CheckedListBox para subtipos (Column C - U_Comercial3)\n- Alternancia visual entre modos de clasificación\n- Filtrado de productos según clasificación seleccionada\n\nMejoras técnicas:\n- Agregados controles rbTipo y rbSubtipo\n- Implementado clbSubtipos para clasificación por subtipo\n- Lógica de toggle en RbTipo_CheckedChanged y RbSubtipo_CheckedChanged\n- BtnIniciar_Click ahora filtra por ItmsGrpNam o U_Comercial3\n- CboAlmacen_SelectedIndexChanged carga ambas listas\n\nActualizado:\n- Versión actualizada de 1.0.0 a 1.0.1 en todos los archivos\n- Footer en PantallaPrincipal.Designer.cs\n- Footer en InventarioForm.cs\n- Footer en reporte HTML de email\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(curl:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git config:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\Users\\Nandy\\Desktop\\create_release.ps1\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\Users\\Nandy\\Desktop\\upload_asset.ps1\")",
+      "Bash(cat:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\Users\\Nandy\\Desktop\\update_release.ps1\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\Users\\Nandy\\Desktop\\fix_release.ps1\")",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []
