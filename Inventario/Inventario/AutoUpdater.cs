@@ -12,7 +12,7 @@ namespace Inventario
     {
         private const string VERSION_URL = "https://raw.githubusercontent.com/NandoPls/StockControl/master/Inventario/version.txt";
         private const string RELEASE_URL = "https://github.com/NandoPls/StockControl/releases/download/v{0}/StockControl_v{0}.zip";
-        private const string CURRENT_VERSION = "1.2.6";
+        private const string CURRENT_VERSION = "1.2.7";
 
         public static async Task<bool> CheckForUpdates(Form parentForm)
         {

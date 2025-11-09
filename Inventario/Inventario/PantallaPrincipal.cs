@@ -120,6 +120,11 @@ namespace Inventario
 
         private void CargarDesdeExcel()
         {
+            // Mostrar indicador de carga
+            lblArchivoSeleccionado.Text = "⏳ Cargando archivo Excel...";
+            lblArchivoSeleccionado.ForeColor = Color.FromArgb(243, 156, 18); // Naranja
+            Application.DoEvents(); // Actualizar UI
+
             try
             {
                 // Cargar datos del Excel
@@ -158,10 +163,16 @@ namespace Inventario
             }
             catch (IOException ioEx)
             {
+                // Restaurar texto y color
+                lblArchivoSeleccionado.Text = $"Archivo: {Path.GetFileName(archivoExcelSeleccionado!)}";
+                lblArchivoSeleccionado.ForeColor = Color.FromArgb(46, 204, 113);
                 MessageBox.Show(ioEx.Message, "Archivo en Uso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             catch (Exception ex)
             {
+                // Restaurar texto y color
+                lblArchivoSeleccionado.Text = $"Archivo: {Path.GetFileName(archivoExcelSeleccionado!)}";
+                lblArchivoSeleccionado.ForeColor = Color.FromArgb(46, 204, 113);
                 string nombreArchivo = Path.GetFileName(archivoExcelSeleccionado!);
                 MessageBox.Show($"Error al cargar el archivo \"{nombreArchivo}\":\n\n{ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);

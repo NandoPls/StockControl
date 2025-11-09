@@ -29,7 +29,6 @@ namespace Inventario
         private DataGridView dgvInventario;
         private Button btnIniciar;
         private Button btnFinalizar;
-        private Button btnGenerarReporte;
         private Button btnCancelar;
         private Panel panelSeleccion;
         private Panel panelEscaneo;
@@ -298,7 +297,6 @@ namespace Inventario
             dgvInventario.Columns.Add("Detalle", "Detalle");
             dgvInventario.Columns.Add("Codigo", "Código");
             dgvInventario.Columns.Add("EAN", "EAN");
-            dgvInventario.Columns.Add("Descripcion", "Descripción");
             dgvInventario.Columns.Add("StockSistema", "Stock Sistema");
             dgvInventario.Columns.Add("StockContado", "Stock Contado");
             dgvInventario.Columns.Add("Diferencia", "Diferencia");
@@ -386,22 +384,6 @@ namespace Inventario
             btnFinalizar.FlatAppearance.BorderSize = 0;
             btnFinalizar.Click += BtnFinalizar_Click;
             panelEscaneo.Controls.Add(btnFinalizar);
-
-            btnGenerarReporte = new Button
-            {
-                Text = "📧 GENERAR REPORTE",
-                Location = new Point(340, 668),
-                Size = new Size(260, 35),
-                Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                BackColor = Color.FromArgb(0, 123, 255),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand,
-                Enabled = false
-            };
-            btnGenerarReporte.FlatAppearance.BorderSize = 0;
-            btnGenerarReporte.Click += BtnGenerarReporte_Click;
-            panelEscaneo.Controls.Add(btnGenerarReporte);
 
             btnCancelar = new Button
             {
@@ -528,7 +510,7 @@ namespace Inventario
 
             Label lblFooter = new Label
             {
-                Text = "StockControl v1.2.6 | Desarrollado por Fernando Carrasco",
+                Text = "StockControl v1.2.7 | Desarrollado por Fernando Carrasco",
                 Location = new Point(20, 10),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9),
@@ -746,7 +728,6 @@ namespace Inventario
                     row.Cells["Detalle"].Value = producto.U_Comercial3;
                     row.Cells["Codigo"].Value = producto.ItemCode;
                     row.Cells["EAN"].Value = producto.CodeBars;
-                    row.Cells["Descripcion"].Value = producto.ItemName;
                     row.Cells["StockSistema"].Value = producto.StockTienda;
                     row.Cells["StockContado"].Value = 0;
                     row.Cells["Diferencia"].Value = -producto.StockTienda;
@@ -951,32 +932,9 @@ namespace Inventario
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
 
-                // Habilitar botón de generar reporte y deshabilitar finalizar
-                btnGenerarReporte.Enabled = true;
+                // Deshabilitar finalizar
                 btnFinalizar.Enabled = false;
                 txtEscaneo.Enabled = false;
-            }
-        }
-
-        private void BtnGenerarReporte_Click(object sender, EventArgs e)
-        {
-            var resultado = MessageBox.Show(
-                "¿Generar reporte y abrir en Outlook?\n\nSe creará un correo con el archivo Excel adjunto.",
-                "Generar Reporte",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (resultado == DialogResult.Yes)
-            {
-                GenerarReporteInventario();
-
-                MessageBox.Show(
-                    "✅ Reporte generado.\n\nSe ha abierto Outlook con el correo del reporte.",
-                    "Reporte Generado",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-
-                this.Close();
             }
         }
 
@@ -1064,7 +1022,7 @@ namespace Inventario
                 📎 Ver detalle completo en el archivo Excel adjunto.
             </div>
 
-            <p>Saludos,<br><strong>StockControl v1.2.6</strong></p>
+            <p>Saludos,<br><strong>StockControl v1.2.7</strong></p>
         </div>
 
         <div class='footer'>
@@ -1416,7 +1374,6 @@ namespace Inventario
                             row.Cells["Detalle"].Value = producto.U_Comercial3;
                             row.Cells["Codigo"].Value = producto.ItemCode;
                             row.Cells["EAN"].Value = producto.CodeBars;
-                            row.Cells["Descripcion"].Value = producto.ItemName;
                             row.Cells["StockSistema"].Value = producto.StockTienda;
                             row.Cells["StockContado"].Value = stockContado;
                             row.Cells["Diferencia"].Value = stockContado - producto.StockTienda;
